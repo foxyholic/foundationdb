@@ -211,6 +211,10 @@ inline std::string describe(const int item) {
 	return format("%d", item);
 }
 
+inline std::string describe(const Version item) {
+	return format("%ld", item);
+}
+
 // Allows describeList to work on a vector of std::string
 std::string describe(const std::string& s);
 
@@ -342,7 +346,11 @@ struct KeyRangeRef {
 				return false; // uncovered gap between clone.begin and r.begin
 			if (clone.end <= r.end)
 				return true; // range is fully covered
-			if (clone.end > r.begin)
+			// If a range of ranges is totally at the left of clone,
+			// clone needs not update
+			// If a range of ranges is partially at the left of clone,
+			// clone = clone - the overlap
+			if (clone.end > r.end && r.end > clone.begin)
 				// {clone.begin, r.end} is covered. need to check coverage for {r.end, clone.end}
 				clone = KeyRangeRef(r.end, clone.end);
 		}
@@ -1639,7 +1647,7 @@ struct StorageWiggleValue {
 
 enum class ReadType { EAGER = 0, FETCH = 1, LOW = 2, NORMAL = 3, HIGH = 4, MIN = EAGER, MAX = HIGH };
 
-FDB_DECLARE_BOOLEAN_PARAM(CacheResult);
+FDB_BOOLEAN_PARAM(CacheResult);
 
 // store options for storage engine read
 // ReadType describes the usage and priority of the read
